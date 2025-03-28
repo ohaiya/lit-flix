@@ -1,0 +1,35 @@
+.logo {
+  display: flex;
+  align-items: center;
+
+  span {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(45deg, #FF3366, #00CCCC);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    cursor: pointer;
+    transition: all 0.8s ease;
+    padding: 0 8px;
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+
+    &:hover {
+      background-position: 100% 100%;
+    }
+  }
+}
+
+.nav-icon {
+  margin-right: 8px;
+}
+
+.operation-icon {
+  color: #fff;
+  opacity: 0.8;
+}
+
+.operation-button {
+  --td-button-hover-bg-color: rgba(255, 255, 255, 0.1);
+} 

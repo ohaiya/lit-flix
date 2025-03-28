@@ -1,0 +1,96 @@
+.admin-login {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+
+  &__left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    color: white;
+    padding: 40px;
+  }
+
+  &__logo {
+    margin-bottom: 40px;
+
+    span {
+      font-size: 32px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #ff3366, #00cccc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+
+  &__slogan {
+    text-align: center;
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 18px;
+      opacity: 0.8;
+    }
+  }
+
+  &__right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    padding: 40px;
+  }
+
+  &__form {
+    width: 100%;
+    max-width: 400px;
+
+    h2 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 24px 0;
+
+    &::before,
+    &::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #e7e7e7;
+    }
+
+    span {
+      padding: 0 16px;
+      color: #999;
+      font-size: 14px;
+    }
+  }
+
+  &__github-btn-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  &__back {
+    text-align: center;
+    margin-top: 16px;
+  }
+}

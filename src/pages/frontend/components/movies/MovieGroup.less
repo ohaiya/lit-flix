@@ -1,0 +1,30 @@
+.movies {
+  &__group {
+    margin-bottom: 48px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    h2 {
+      font-size: 24px;
+      color: #333;
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 8px;
+  }
+} 
