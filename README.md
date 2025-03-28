@@ -4,9 +4,15 @@
 
 ![](https://img.shields.io/badge/React-61DAFB.svg?style=for-the-badge&logo=react&labelColor=000000&logoWidth=20)
 ![](https://img.shields.io/badge/Vite-646CFF.svg?style=for-the-badge&logo=vite&labelColor=000000&logoWidth=20)
-![](https://img.shields.io/github/license/ohaiya/lit-flix.svg?style=for-the-badge)
-![](https://img.shields.io/github/v/release/ohaiya/lit-flix?style=for-the-badge)
+![](https://img.shields.io/github/license/ohaiya/lit-flix.svg?style=for-the-badge&)
+![](https://img.shields.io/github/v/release/ohaiya/lit-flix.svg?style=for-the-badge&)
+![](https://img.shields.io/github/issues/ohaiya/lit-flix?style=for-the-badge&color=F48D73)
 
+</p>
+
+<p align="center">
+  English | 
+  <a href="README_zh-CN.md">简体中文</a>
 </p>
 
 ## Introduction
