@@ -31,13 +31,11 @@ const Login = () => {
     <div className="admin-login">
       {/* 左侧区域 */}
       <div className="admin-login__left">
+        <div className="admin-login__gradient-circle"></div>
         <div className="admin-login__logo">
           <span>LitFlix</span>
         </div>
-        <div className="admin-login__slogan">
-          <h1>欢迎回来</h1>
-          <p>登录以管理您的影视库</p>
-        </div>
+
       </div>
 
       {/* 右侧登录表单 */}
