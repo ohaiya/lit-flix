@@ -1,52 +1,67 @@
 import axios from 'axios';
+import { MessagePlugin } from 'tdesign-react';
 
+// 创建 axios 实例
 const request = axios.create({
-  baseURL: 'https://lf.request.com',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: '/api',
+  timeout: 5000
 });
 
 // 请求拦截器
 request.interceptors.request.use(
-  (config) => {
-    // 这里可以添加token等认证信息
+  config => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response) => {
-    return response.data;
+  response => {
+    const { code, message, data } = response.data;
+    
+    // 请求成功
+    if (code === 0) {
+      return data;
+    }
+    
+    // 请求失败
+    MessagePlugin.error(message);
+    return Promise.reject(new Error(message));
   },
-  (error) => {
-    // 这里可以统一处理错误
+  error => {
     if (error.response) {
-      switch (error.response.status) {
+      const { code, message } = error.response.data;
+      
+      switch (code) {
+        case -1:
+          MessagePlugin.error(message || '操作失败');
+          break;
         case 401:
-          // 未授权，跳转到登录页
+          // 未授权，清除 token 并跳转到登录页
+          localStorage.removeItem('token');
+          window.location.href = '/admin/login';
           break;
         case 403:
-          // 权限不足
+          MessagePlugin.error('没有权限访问');
           break;
         case 404:
-          // 资源不存在
+          MessagePlugin.error('请求的资源不存在');
           break;
-        case 500:
-          // 服务器错误
+        case 400:
+          MessagePlugin.error(message || '参数验证失败');
           break;
         default:
-          break;
+          MessagePlugin.error(message || '请求失败');
       }
+    } else {
+      MessagePlugin.error('网络错误，请稍后重试');
     }
     return Promise.reject(error);
   }

@@ -1,6 +1,7 @@
 import { Form, Input, Button, MessagePlugin, Link } from 'tdesign-react';
 import { LogoGithubIcon, UserIcon, LockOnIcon } from 'tdesign-icons-react';
 import { useNavigate } from 'react-router-dom';
+import request from '../../utils/request';
 import './Login.less';
 
 const { FormItem } = Form;
@@ -8,9 +9,23 @@ const { FormItem } = Form;
 const Login = () => {
   const navigate = useNavigate();
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     if (e.validateResult === true) {
-      MessagePlugin.success('登录成功');
+      try {
+        const { username, password } = e.fields;
+        const { token, username: adminUsername } = await request.post('/auth/login', {
+          username,
+          password
+        });
+
+        // 存储 token
+        localStorage.setItem('token', token);
+        MessagePlugin.success('登录成功');
+        navigate('/admin');
+      } catch (error) {
+        // 错误已经在 request 拦截器中处理
+        console.error('登录失败:', error);
+      }
     }
   };
 

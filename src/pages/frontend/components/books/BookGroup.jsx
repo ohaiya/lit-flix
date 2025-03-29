@@ -17,7 +17,7 @@ const BookGroup = ({ title, books, onBookClick }) => {
       <div className="books__grid">
         {books.map((book) => (
           <BookCard 
-            key={book.id} 
+            key={book._id} 
             book={book}
             onClick={onBookClick}
           />

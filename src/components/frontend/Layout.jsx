@@ -15,7 +15,7 @@ import './Layout.less';
 
 const { HeadMenu, MenuItem } = Menu;
 
-const Layout = () => {
+const FrontendLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -76,4 +76,4 @@ const Layout = () => {
   );
 };
 
-export default Layout; 
+export default FrontendLayout; 

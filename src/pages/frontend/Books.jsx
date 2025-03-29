@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from 'tdesign-react';
 import BookGroup from './components/books/BookGroup';
 import BookDetail from './components/books/BookDetail';
+import request from '../../utils/request';
 import './Books.less';
 
 const Books = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [visible, setVisible] = useState(false);
   const [expandedNoteIndex, setExpandedNoteIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [books, setBooks] = useState([]);
+  const [total, setTotal] = useState(0);
 
   // 分离读书笔记数据
   const bookNotes = {
@@ -233,424 +237,64 @@ const Books = () => {
     ],
   };
 
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const response = await request.get('/books', {
+        params: {
+          current: 1,
+          pageSize: 100 // 获取所有书籍
+        }
+      });
+      const { list, total } = response;
+      setBooks(list);
+      setTotal(total);
+    } catch (error) {
+      console.error('获取书籍列表失败:', error);
+      console.error('错误详情:', error.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  // 将书籍按状态分组
   const bookGroups = [
     {
       id: 'favorite',
       title: '收藏',
-      books: [
-        {
-          id: 1,
-          title: '人生的智慧',
-          subtitle: '叔本华的哲学启示',
-          author: '叔本华',
-          publisher: '上海三联书店',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 2,
-          title: '未来简史',
-          subtitle: '从智人到智神',
-          author: '尤瓦尔·赫拉利',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 9,
-          title: '人类简史',
-          subtitle: '从动物到上帝',
-          author: '尤瓦尔·赫拉利',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 10,
-          title: '时间简史',
-          subtitle: '从大爆炸到黑洞',
-          author: '史蒂芬·霍金',
-          publisher: '湖南科技出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 11,
-          title: '思考，快与慢',
-          subtitle: '诺贝尔经济学奖得主丹尼尔·卡尼曼代表作',
-          author: '丹尼尔·卡尼曼',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/5833988f44c2b4a911d07c5f17ee816a.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 12,
-          title: '原则',
-          subtitle: '生活和工作',
-          author: '瑞·达利欧',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/2aa7e4773fdf4ad02b9b2865bdb1a179.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 13,
-          title: '穷查理宝典',
-          subtitle: '查理·芒格的智慧箴言',
-          author: '查理·芒格',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cddd77844d7a5cb0325a1361be6b5f1c.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 14,
-          title: '黑天鹅',
-          subtitle: '如何应对不可预知的未来',
-          author: '纳西姆·塔勒布',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/84f1bf2af01963751e7114e4ab0037d3.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 15,
-          title: '反脆弱',
-          subtitle: '从不确定性中获益',
-          author: '纳西姆·塔勒布',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/633b552098b8700e92868056a9618e71.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 16,
-          title: '枪炮、病菌与钢铁',
-          subtitle: '人类社会的命运',
-          author: '贾雷德·戴蒙德',
-          publisher: '中信出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cc1303a206cc87476e7161b559cee7cc.jpg',
-          rating: 4.8,
-        },
-      ],
+      books: books.filter(book => book.isFavorite === true)
     },
     {
       id: 'reading',
       title: '正在看',
-      books: [
-        {
-          id: 3,
-          title: '局外人',
-          subtitle: '加缪代表作',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/5833988f44c2b4a911d07c5f17ee816a.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 17,
-          title: '鼠疫',
-          subtitle: '加缪代表作',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 18,
-          title: '西西弗神话',
-          subtitle: '加缪哲学随笔',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 19,
-          title: '卡利古拉',
-          subtitle: '加缪戏剧作品',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/5833988f44c2b4a911d07c5f17ee816a.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 20,
-          title: '堕落',
-          subtitle: '加缪后期作品',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/2aa7e4773fdf4ad02b9b2865bdb1a179.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 21,
-          title: '第一个人',
-          subtitle: '加缪自传体小说',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cddd77844d7a5cb0325a1361be6b5f1c.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 22,
-          title: '流放与王国',
-          subtitle: '加缪短篇小说集',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/84f1bf2af01963751e7114e4ab0037d3.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 23,
-          title: '反抗者',
-          subtitle: '加缪哲学论著',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/633b552098b8700e92868056a9618e71.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 24,
-          title: '婚礼集',
-          subtitle: '加缪散文集',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cc1303a206cc87476e7161b559cee7cc.jpg',
-          rating: 4.5,
-        },
-        {
-          id: 25,
-          title: '误会',
-          subtitle: '加缪戏剧作品',
-          author: '阿尔贝·加缪',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.6,
-        },
-      ],
+      books: books.filter(book => book.status === 'reading')
     },
     {
       id: 'finished',
       title: '已看完',
-      books: [
-        {
-          id: 4,
-          title: '百年孤独',
-          subtitle: '魔幻现实主义经典',
-          author: '加西亚·马尔克斯',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/2aa7e4773fdf4ad02b9b2865bdb1a179.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 5,
-          title: '活着',
-          subtitle: '',
-          author: '余华',
-          publisher: '作家出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cddd77844d7a5cb0325a1361be6b5f1c.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 26,
-          title: '霍乱时期的爱情',
-          subtitle: '马尔克斯代表作',
-          author: '加西亚·马尔克斯',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 27,
-          title: '许三观卖血记',
-          subtitle: '余华代表作',
-          author: '余华',
-          publisher: '作家出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/5833988f44c2b4a911d07c5f17ee816a.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 28,
-          title: '兄弟',
-          subtitle: '余华长篇小说',
-          author: '余华',
-          publisher: '作家出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/2aa7e4773fdf4ad02b9b2865bdb1a179.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 29,
-          title: '第七天',
-          subtitle: '余华新作',
-          author: '余华',
-          publisher: '作家出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cddd77844d7a5cb0325a1361be6b5f1c.jpg',
-          rating: 4.5,
-        },
-        {
-          id: 30,
-          title: '文城',
-          subtitle: '余华新作',
-          author: '余华',
-          publisher: '作家出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/84f1bf2af01963751e7114e4ab0037d3.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 31,
-          title: '一桩事先张扬的凶杀案',
-          subtitle: '马尔克斯代表作',
-          author: '加西亚·马尔克斯',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/633b552098b8700e92868056a9618e71.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 32,
-          title: '枯枝败叶',
-          subtitle: '马尔克斯处女作',
-          author: '加西亚·马尔克斯',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/cc1303a206cc87476e7161b559cee7cc.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 33,
-          title: '恶时辰',
-          subtitle: '马尔克斯短篇小说集',
-          author: '加西亚·马尔克斯',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.7,
-        },
-      ],
+      books: books.filter(book => book.status === 'finished')
     },
     {
       id: 'wishlist',
       title: '想看',
-      books: [
-        {
-          id: 6,
-          title: '解忧杂货店',
-          subtitle: '东野圭吾温情小说',
-          author: '东野圭吾',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/84f1bf2af01963751e7114e4ab0037d3.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 7,
-          title: '围城',
-          subtitle: '',
-          author: '钱钟书',
-          publisher: '人民文学出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/633b552098b8700e92868056a9618e71.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 8,
-          title: '三体',
-          subtitle: '中国科幻代表作',
-          author: '刘慈欣',
-          publisher: '重庆出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cc1303a206cc87476e7161b559cee7cc.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 34,
-          title: '白夜行',
-          subtitle: '东野圭吾代表作',
-          author: '东野圭吾',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 35,
-          title: '嫌疑人X的献身',
-          subtitle: '东野圭吾代表作',
-          author: '东野圭吾',
-          publisher: '南海出版公司',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.9,
-        },
-        {
-          id: 36,
-          title: '人间失格',
-          subtitle: '太宰治代表作',
-          author: '太宰治',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/5833988f44c2b4a911d07c5f17ee816a.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 37,
-          title: '挪威的森林',
-          subtitle: '村上春树代表作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/2aa7e4773fdf4ad02b9b2865bdb1a179.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 38,
-          title: '海边的卡夫卡',
-          subtitle: '村上春树代表作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cddd77844d7a5cb0325a1361be6b5f1c.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 39,
-          title: '1Q84',
-          subtitle: '村上春树代表作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/84f1bf2af01963751e7114e4ab0037d3.jpg',
-          rating: 4.8,
-        },
-        {
-          id: 40,
-          title: '且听风吟',
-          subtitle: '村上春树处女作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/633b552098b8700e92868056a9618e71.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 41,
-          title: '刺杀骑士团长',
-          subtitle: '村上春树新作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/cc1303a206cc87476e7161b559cee7cc.jpg',
-          rating: 4.7,
-        },
-        {
-          id: 42,
-          title: '舞！舞！舞！',
-          subtitle: '村上春树代表作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/d06f75d3d6c20cb238fd0dd888bb918c.jpg',
-          rating: 4.6,
-        },
-        {
-          id: 43,
-          title: '奇鸟行状录',
-          subtitle: '村上春树代表作',
-          author: '村上春树',
-          publisher: '上海译文出版社',
-          cover: 'https://public.readdy.ai/ai/img_res/4d7eed46ebee84f3b03dcae0ea7a0473.jpg',
-          rating: 4.7,
-        },
-      ],
-    },
+      books: books.filter(book => book.status === 'wishlist')
+    }
   ];
 
-  const handleBookClick = (book) => {
-    setSelectedBook(book);
-    setVisible(true);
-    setExpandedNoteIndex(0);
+  const handleBookClick = async (book) => {
+    try {
+      const data = await request.get(`/books/${book._id}`);
+      setSelectedBook(data);
+      setVisible(true);
+      setExpandedNoteIndex(0);
+    } catch (error) {
+      console.error('获取书籍详情失败:', error);
+      console.error('错误详情:', error.response?.data);
+    }
   };
 
   const handleNoteClick = (index) => {
@@ -682,7 +326,7 @@ const Books = () => {
         {selectedBook && (
           <BookDetail
             book={selectedBook}
-            notes={getBookNotes(selectedBook.id)}
+            notes={getBookNotes(selectedBook._id)}
             expandedNoteIndex={expandedNoteIndex}
             onNoteClick={handleNoteClick}
           />

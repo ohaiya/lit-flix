@@ -1,0 +1,52 @@
+.admin-books {
+  width: 100%;
+  overflow-x: auto;
+
+  .t-card {
+    margin-bottom: 16px;
+
+    .t-form {
+      .t-form__item {
+        margin-bottom: 16px;
+
+        &:last-child {
+          margin-bottom: 0;
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  .t-table {
+    background: white;
+    border-radius: var(--td-radius-medium);
+
+    &__header {
+      th {
+        background-color: var(--td-bg-color-container-hover);
+      }
+    }
+
+    &__row {
+      &:hover {
+        background-color: var(--td-bg-color-container-hover);
+      }
+    }
+  }
+
+  .t-button + .t-button {
+    margin-left: 8px;
+  }
+
+  .t-form {
+    padding: 12px;
+  }
+
+  .header-container {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: white;
+    margin-bottom: 16px;
+  }
+} 
