@@ -7,7 +7,7 @@ export const createMovieValidator = [
   body('year').isInt({ min: 1900, max: new Date().getFullYear() }).withMessage('年份格式不正确'),
   body('region').trim().notEmpty().withMessage('地区不能为空'),
   body('rating').optional().isFloat({ min: 0, max: 5 }).withMessage('评分必须在0-5之间'),
-  body('status').isIn(['watching', 'completed', 'planning']).withMessage('状态值不正确'),
+  body('status').isIn(['watching', 'finished', 'wishlist']).withMessage('状态值不正确'),
   body('progress').optional().isInt({ min: 0, max: 100 }).withMessage('进度必须在0-100之间'),
   body('isFavorite').optional().isBoolean().withMessage('收藏状态必须是布尔值'),
 ];
@@ -20,14 +20,14 @@ export const updateMovieValidator = [
   body('year').optional().isInt({ min: 1900, max: new Date().getFullYear() }).withMessage('年份格式不正确'),
   body('region').optional().trim().notEmpty().withMessage('地区不能为空'),
   body('rating').optional().isFloat({ min: 0, max: 5 }).withMessage('评分必须在0-5之间'),
-  body('status').optional().isIn(['watching', 'completed', 'planning']).withMessage('状态值不正确'),
+  body('status').optional().isIn(['watching', 'finished', 'wishlist']).withMessage('状态值不正确'),
   body('progress').optional().isInt({ min: 0, max: 100 }).withMessage('进度必须在0-100之间'),
   body('isFavorite').optional().isBoolean().withMessage('收藏状态必须是布尔值'),
 ];
 
 // 获取电影列表验证
 export const getMoviesValidator = [
-  query('status').optional().isIn(['watching', 'completed', 'planning']).withMessage('状态值不正确'),
+  query('status').optional().isIn(['watching', 'finished', 'wishlist']).withMessage('状态值不正确'),
   query('isFavorite').optional().isBoolean().withMessage('收藏状态必须是布尔值'),
 ];
 

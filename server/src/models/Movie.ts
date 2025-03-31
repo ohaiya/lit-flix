@@ -1,31 +1,18 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface INote {
-  _id: Schema.Types.ObjectId;
-  title: string;
-  content: string;
-  date: string;
-}
-
 export interface IMovie extends Document {
   title: string;
   cover: string;
-  year: number;
+  year: string;
   region: string;
   rating: number;
-  status: 'watching' | 'completed' | 'planning';
+  status: 'watching' | 'finished' | 'wishlist';
   progress: number;
   isFavorite: boolean;
-  notes: INote[];
+  type: 'movie' | 'tv';
   createdAt: Date;
   updatedAt: Date;
 }
-
-const noteSchema = new Schema({
-  title: { type: String, required: true },
-  content: { type: String, required: true },
-  date: { type: String, required: true }
-}, { _id: true });
 
 const movieSchema = new Schema<IMovie>(
   {
@@ -39,7 +26,7 @@ const movieSchema = new Schema<IMovie>(
       required: [true, '封面图片是必需的'],
     },
     year: {
-      type: Number,
+      type: String,
       required: [true, '年份是必需的'],
     },
     region: {
@@ -56,9 +43,9 @@ const movieSchema = new Schema<IMovie>(
     },
     status: {
       type: String,
-      enum: ['watching', 'completed', 'planning'],
+      enum: ['watching', 'finished', 'wishlist'],
       required: [true, '状态是必需的'],
-      default: 'planning',
+      default: 'wishlist',
     },
     progress: {
       type: Number,
@@ -70,7 +57,12 @@ const movieSchema = new Schema<IMovie>(
       type: Boolean,
       default: false,
     },
-    notes: [noteSchema],
+    type: {
+      type: String,
+      enum: ['movie', 'tv'],
+      required: [true, '类型是必需的'],
+      default: 'movie',
+    }
   },
   {
     timestamps: true,
@@ -81,5 +73,6 @@ const movieSchema = new Schema<IMovie>(
 movieSchema.index({ title: 1 });
 movieSchema.index({ status: 1 });
 movieSchema.index({ isFavorite: 1 });
+movieSchema.index({ type: 1 });
 
 export const Movie = mongoose.model<IMovie>('Movie', movieSchema); 

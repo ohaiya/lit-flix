@@ -4,8 +4,9 @@ import AdminLayout from '../components/admin/AdminLayout';
 import Login from '../pages/admin/Login';
 import Dashboard from '../pages/admin/Dashboard';
 import FrontendBooks from '../pages/frontend/Books';
-import Movies from '../pages/frontend/Movies';
+import FrontendMovies from '../pages/frontend/Movies';
 import Books from '../pages/admin/Books';
+import Movies from '../pages/admin/Movies';
 
 // 前台页面
 const Home = () => <div>首页</div>;
@@ -29,7 +30,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'movies',
-        element: <Movies />,
+        element: <FrontendMovies />,
       },
     ],
   },
@@ -59,7 +60,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'movies',
-            element: <AdminMovies />
+            element: <Movies />
           }
         ]
       }

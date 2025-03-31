@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dialog } from 'tdesign-react';
+import React, { useState, useEffect } from 'react';
+import { Dialog, MessagePlugin } from 'tdesign-react';
 import { 
   CheckCircleIcon, 
   MovieClapperIcon, 
@@ -8,6 +8,7 @@ import {
 } from 'tdesign-icons-react';
 import MovieGroup from './components/movies/MovieGroup';
 import MovieDetail from './components/movies/MovieDetail';
+import request from '../../utils/request';
 import './Movies.less';
 
 // 示例数据
@@ -21,21 +22,7 @@ const movies = [
     rating: 4.5,
     status: 'finished',
     progress: 100,
-    isFavorite: true,
-    notes: [
-      {
-        id: 1,
-        title: '第一次观看',
-        date: '2024-01-15',
-        content: '这是一部非常经典的科幻电影，诺兰的想象力令人惊叹。梦境层次的设定非常巧妙，演员的表演也很出色。',
-      },
-      {
-        id: 2,
-        title: '第二次观看',
-        date: '2024-02-01',
-        content: '重看时发现了很多细节，比如柯布手上的戒指、陀螺的旋转等。结局的解读也很有意思。',
-      },
-    ],
+    isFavorite: true
   },
   {
     id: 2,
@@ -46,15 +33,7 @@ const movies = [
     rating: 4.8,
     status: 'finished',
     progress: 100,
-    isFavorite: true,
-    notes: [
-      {
-        id: 3,
-        title: '第一次观看',
-        date: '2024-01-20',
-        content: '诺兰的又一部科幻巨作，将亲情与科幻完美结合。配乐非常震撼，视觉效果也很出色。',
-      },
-    ],
+    isFavorite: true
   },
   {
     id: 3,
@@ -65,15 +44,7 @@ const movies = [
     rating: 4.2,
     status: 'watching',
     progress: 60,
-    isFavorite: false,
-    notes: [
-      {
-        id: 4,
-        title: '观看中',
-        date: '2024-02-10',
-        content: '诺兰的新作，黑白与彩色画面的切换很有意思。基里安·墨菲的表演非常出色。',
-      },
-    ],
+    isFavorite: false
   },
   {
     id: 4,
@@ -84,8 +55,7 @@ const movies = [
     rating: 0,
     status: 'wishlist',
     progress: 0,
-    isFavorite: false,
-    notes: [],
+    isFavorite: false
   },
 ];
 
@@ -99,21 +69,7 @@ const tvShows = [
     rating: 4.7,
     status: 'finished',
     progress: 100,
-    isFavorite: true,
-    notes: [
-      {
-        id: 5,
-        title: '第一集',
-        date: '2024-01-25',
-        content: '新一季的故事发生在阿拉斯加，氛围非常阴郁。主演的表演很出色。',
-      },
-      {
-        id: 6,
-        title: '第二集',
-        date: '2024-02-01',
-        content: '剧情逐渐展开，悬疑感很强。配乐和摄影都很出色。',
-      },
-    ],
+    isFavorite: true
   },
   {
     id: 6,
@@ -124,15 +80,7 @@ const tvShows = [
     rating: 4.6,
     status: 'watching',
     progress: 40,
-    isFavorite: false,
-    notes: [
-      {
-        id: 7,
-        title: '观看中',
-        date: '2024-02-05',
-        content: '最终季，剧情更加紧张。每个角色都在为自己的利益而战。',
-      },
-    ],
+    isFavorite: false
   },
   {
     id: 7,
@@ -143,8 +91,7 @@ const tvShows = [
     rating: 0,
     status: 'wishlist',
     progress: 0,
-    isFavorite: false,
-    notes: [],
+    isFavorite: false
   },
 ];
 
@@ -200,10 +147,54 @@ const movieNotes = {
 const Movies = () => {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [expandedNoteIndex, setExpandedNoteIndex] = useState(0);
+  const [movies, setMovies] = useState([]);
+  const [tvShows, setTvShows] = useState([]);
+  const [movieNotes, setMovieNotes] = useState({});
 
-  const handleMovieClick = (movie) => {
-    setSelectedMovie(movie);
-    setExpandedNoteIndex(0);
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        // 获取所有影视
+        const response = await request.get('/movies', {
+          params: {
+            pageSize: 1000 // 设置较大的数值以获取所有数据
+          }
+        });
+        
+        // 分离电影和电视剧
+        const { list } = response;
+        const moviesData = list.filter(item => item.type === 'movie');
+        const tvShowsData = list.filter(item => item.type === 'tv');
+        
+        setMovies(moviesData);
+        setTvShows(tvShowsData);
+      } catch (error) {
+        console.error('获取影视列表失败:', error);
+        MessagePlugin.error('获取影视列表失败');
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  const handleMovieClick = async (movie) => {
+    try {
+      // 获取电影详情（包含笔记）
+      const data = await request.get(`/movies/${movie._id}`);
+      const notes = data.notes || [];
+      
+      // 更新笔记数据
+      setMovieNotes(prev => ({
+        ...prev,
+        [movie._id]: notes
+      }));
+      
+      setSelectedMovie(movie);
+      setExpandedNoteIndex(0);
+    } catch (error) {
+      console.error('获取影视详情失败:', error);
+      MessagePlugin.error('获取影视详情失败');
+    }
   };
 
   const handleNoteClick = (index) => {
@@ -243,7 +234,7 @@ const Movies = () => {
         {selectedMovie && (
           <MovieDetail
             movie={selectedMovie}
-            notes={getMovieNotes(selectedMovie.id)}
+            notes={getMovieNotes(selectedMovie._id)}
             expandedNoteIndex={expandedNoteIndex}
             onNoteClick={handleNoteClick}
           />
