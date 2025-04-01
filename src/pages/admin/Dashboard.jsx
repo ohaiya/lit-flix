@@ -107,10 +107,7 @@ const Dashboard = () => {
             />
           </Card>
         </Col>
-      </Row>
 
-      {/* 最近更新 */}
-      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
         <Col span={12}>
           <Card title="最近更新的书籍">
             <List>

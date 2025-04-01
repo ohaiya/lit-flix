@@ -46,7 +46,7 @@ request.interceptors.response.use(
         case 401:
           // 未授权，清除 token 并跳转到登录页
           localStorage.removeItem('token');
-          window.location.href = '/admin/login';
+          window.location.href = '/login';
           break;
         case 403:
           MessagePlugin.error('没有权限访问');

@@ -30,7 +30,7 @@ const AdminLayout = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/admin/login');
+    navigate('/login');
   };
 
   return (
