@@ -1,6 +1,7 @@
 services:
   mongodb:
-    image: docker.m.daocloud.io/mongodb/mongodb-community-server:latest
+    # image: docker.m.daocloud.io/mongodb/mongodb-community-server:latest
+    image: mongodb/mongodb-community-server:latest
     container_name: litflix-mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin

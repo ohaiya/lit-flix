@@ -1,4 +1,5 @@
-FROM docker.m.daocloud.io/node:22-alpine as builder
+# FROM docker.m.daocloud.io/node:22-alpine as builder
+FROM node:22-alpine as builder
 
 WORKDIR /app
 
@@ -12,7 +13,8 @@ COPY . .
 
 RUN npm run build
 
-FROM docker.m.daocloud.io/nginx:1.27
+# FROM docker.m.daocloud.io/nginx:1.27
+FROM nginx:1.27
 
 ARG NGINX_PORT=5123
 ARG SERVER_IP=server
