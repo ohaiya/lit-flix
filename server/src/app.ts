@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './swagger';
 
 // 导入路由
 import authRoutes from './routes/auth';
@@ -23,6 +25,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // 数据库连接
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lit-flix')
   .then(() => {
@@ -33,7 +38,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lit-flix'
   });
 
 // 路由
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.json({ message: 'Welcome to LitFlix API' });
 });
 
@@ -43,7 +48,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/books', bookRoutes);
 
 // 错误处理中间件
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _request: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ message: '服务器内部错误' });
 });

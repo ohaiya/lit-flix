@@ -6,7 +6,7 @@ import { ResponseUtil } from '../utils/response';
 const generateToken = () => {
   return jwt.sign(
     { isAdmin: true },
-    process.env.JWT_SECRET || 'your-secret-key',
+    process.env.JWT_SECRET || '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
     { expiresIn: '7d' }
   );
 };
@@ -35,7 +35,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 // 获取当前用户信息
-export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
+export const getCurrentUser = async (_: Request, res: Response): Promise<void> => {
   try {
     ResponseUtil.success(res, { username: process.env.ADMIN_USERNAME });
   } catch (error) {
