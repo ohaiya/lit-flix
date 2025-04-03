@@ -1,0 +1,55 @@
+services:
+  mongodb:
+    image: docker.m.daocloud.io/mongodb/mongodb-community-server:latest
+    container_name: litflix-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - litflix-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: litflix-server
+    environment:
+      - MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lit-flix?authSource=admin
+      - JWT_SECRET=1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongodb
+    networks:
+      - litflix-network
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: litflix-ui
+    # environment:
+    #   - NGINX_PORT=5123
+    #   - SERVER_IP=server
+    #   - SERVER_PORT=3001
+    ports:
+      - "5123:5123"
+    depends_on:
+      - server
+    networks:
+      - litflix-network
+
+networks:
+  litflix-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

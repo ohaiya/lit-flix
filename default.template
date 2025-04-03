@@ -1,0 +1,34 @@
+server {
+    listen       ${NGINX_PORT};
+    server_name  localhost;
+
+    location / {
+        root   /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+        index  index.html index.htm;
+        client_max_body_size 0;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    location /health {
+        add_header Content-Type application/json;
+        return 200 '{"status": "health"}';
+    }
+
+    location /api/ {
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://${SERVER_IP}:${SERVER_PORT};
+        proxy_read_timeout 180s;
+        client_max_body_size 0;
+    }
+    
+    client_max_body_size 10m;
+}
+
