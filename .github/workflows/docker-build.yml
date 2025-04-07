@@ -31,11 +31,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: ohaiya/litflix-svr:latest
+          tags: ohaiya/litflix-ui:latest
       -
         name: Build and push UI
         uses: docker/build-push-action@v6
         with:
           context: server
           push: true
-          tags: litflix-ui:latest
+          tags: ohaiya/litflix-svr:latest
