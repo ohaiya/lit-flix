@@ -6,7 +6,8 @@
 ![](https://img.shields.io/badge/Vite-646CFF.svg?style=for-the-badge&logo=vite&labelColor=000000&logoWidth=20)
 ![](https://img.shields.io/github/license/ohaiya/lit-flix.svg?style=for-the-badge)
 ![](https://img.shields.io/github/v/release/ohaiya/lit-flix.svg?style=for-the-badge)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ohaiya/lit-flix/docker-image.yml?style=for-the-badge)
+![](https://img.shields.io/github/actions/workflow/status/ohaiya/lit-flix/docker-build.yml?style=for-the-badge)
+![](https://img.shields.io/github/actions/workflow/status/ohaiya/lit-flix/docker-build-and-push.yml?style=for-the-badge)
 
 </p>
 
