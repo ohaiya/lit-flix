@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface INote {
+export interface INote extends Document {
   _id: Schema.Types.ObjectId;
   title: string;
   content: string;

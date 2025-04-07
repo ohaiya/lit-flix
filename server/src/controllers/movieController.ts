@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { Movie } from '../models/Movie';
-import { MovieNote } from '../models/MovieNote';
 import { ResponseUtil } from '../utils/response';
 
 // 获取所有电影
@@ -72,11 +71,7 @@ export const getMovie = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    // 获取电影的笔记
-    const notes = await MovieNote.find({ movieId: req.params.id }).sort({ date: -1 });
-    const movieData = movie.toObject();
-    
-    ResponseUtil.success(res, { ...movieData, notes }, '获取电影详情成功');
+    ResponseUtil.success(res, movie, '获取电影详情成功');
   } catch (error) {
     console.error('获取电影详情失败:', error);
     ResponseUtil.error(res, '获取电影详情失败');
@@ -133,9 +128,6 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
       return;
     }
     
-    // 删除相关的笔记
-    await MovieNote.deleteMany({ movieId: req.params.id });
-    
     ResponseUtil.success(res, null, '删除电影成功');
   } catch (error) {
     console.error('删除电影失败:', error);
@@ -153,13 +145,10 @@ export const addNote = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const note = new MovieNote({
-      movieId: req.params.id,
-      ...req.body
-    });
-    await note.save();
+    movie.notes.push(req.body);
+    await movie.save();
 
-    ResponseUtil.success(res, note, '添加笔记成功');
+    ResponseUtil.success(res, movie, '添加笔记成功');
   } catch (error) {
     console.error('添加笔记失败:', error);
     if (error.name === 'ValidationError') {
@@ -173,19 +162,74 @@ export const addNote = async (req: Request, res: Response): Promise<void> => {
 // 删除笔记
 export const deleteNote = async (req: Request, res: Response): Promise<void> => {
   try {
-    const note = await MovieNote.findOneAndDelete({
-      _id: req.params.noteId,
-      movieId: req.params.id
-    });
+    const movie = await Movie.findById(req.params.id);
+    if (!movie) {
+      ResponseUtil.notFound(res, '电影不存在');
+      return;
+    }
 
-    if (!note) {
+    const noteIndex = movie.notes.findIndex(note => note._id.toString() === req.params.noteId);
+    if (noteIndex === -1) {
       ResponseUtil.notFound(res, '笔记不存在');
       return;
     }
+
+    movie.notes.splice(noteIndex, 1);
+    await movie.save();
 
     ResponseUtil.success(res, null, '删除笔记成功');
   } catch (error) {
     console.error('删除笔记失败:', error);
     ResponseUtil.error(res, '删除笔记失败');
+  }
+};
+
+// 更新笔记
+export const updateNote = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const movie = await Movie.findById(req.params.id);
+    if (!movie) {
+      ResponseUtil.notFound(res, '电影不存在');
+      return;
+    }
+
+    const noteIndex = movie.notes.findIndex(note => note._id.toString() === req.params.noteId);
+    if (noteIndex === -1) {
+      ResponseUtil.notFound(res, '笔记不存在');
+      return;
+    }
+
+    // 更新笔记内容
+    movie.notes[noteIndex] = {
+      ...movie.notes[noteIndex].toObject(),
+      ...req.body,
+      _id: movie.notes[noteIndex]._id // 保持原有的_id
+    };
+    
+    await movie.save();
+    ResponseUtil.success(res, movie.notes[noteIndex], '更新笔记成功');
+  } catch (error) {
+    console.error('更新笔记失败:', error);
+    if (error.name === 'ValidationError') {
+      ResponseUtil.validationError(res, error.message);
+    } else {
+      ResponseUtil.error(res, '更新笔记失败');
+    }
+  }
+};
+
+// 获取电影的所有笔记
+export const getNotes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const movie = await Movie.findById(req.params.id);
+    if (!movie) {
+      ResponseUtil.notFound(res, '电影不存在');
+      return;
+    }
+
+    ResponseUtil.success(res, movie.notes || [], '获取笔记列表成功');
+  } catch (error) {
+    console.error('获取笔记列表失败:', error);
+    ResponseUtil.error(res, '获取笔记列表失败');
   }
 }; 

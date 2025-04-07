@@ -1,5 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface INote extends Document {
+  _id: Schema.Types.ObjectId;
+  title: string;
+  content: string;
+  date: string;
+}
+
 export interface IMovie extends Document {
   title: string;
   cover: string;
@@ -10,9 +17,16 @@ export interface IMovie extends Document {
   progress: number;
   isFavorite: boolean;
   type: 'movie' | 'tv';
+  notes: INote[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const noteSchema = new Schema({
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  date: { type: String, required: true }
+}, { _id: true });
 
 const movieSchema = new Schema<IMovie>(
   {
@@ -62,7 +76,8 @@ const movieSchema = new Schema<IMovie>(
       enum: ['movie', 'tv'],
       required: [true, '类型是必需的'],
       default: 'movie',
-    }
+    },
+    notes: [noteSchema],
   },
   {
     timestamps: true,

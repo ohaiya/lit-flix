@@ -15,6 +15,8 @@ import {
   Popconfirm,
   Link,
   Card,
+  Textarea,
+  DatePicker,
 } from 'tdesign-react';
 import { AddIcon, RefreshIcon, ChevronDownIcon } from 'tdesign-icons-react';
 import request from '../../utils/request';
@@ -45,6 +47,15 @@ const Movies = () => {
   const [total, setTotal] = useState(0);
   const [searchForm] = Form.useForm();
   const [expanded, setExpanded] = useState(true);
+
+  // 笔记管理相关状态
+  const [notesVisible, setNotesVisible] = useState(false);
+  const [noteFormVisible, setNoteFormVisible] = useState(false);
+  const [noteForm] = Form.useForm();
+  const [currentNote, setCurrentNote] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const [noteDate, setNoteDate] = useState(new Date().toISOString().slice(0, 19).replace('T', ' '));
+  const [noteDetailVisible, setNoteDetailVisible] = useState(false);
 
   const columns = [
     {
@@ -101,7 +112,7 @@ const Movies = () => {
     {
       title: '操作',
       colKey: 'operation',
-      width: 120,
+      width: 180,
       fixed: 'right',
       cell: ({ row }) => (
         <Space size="small">
@@ -109,10 +120,16 @@ const Movies = () => {
             theme="primary" 
             hover="color" 
             onClick={() => handleEdit(row)}
-            {...(editingId === row._id ? { loading: true } : {})}
             disabled={editingId === row._id}
           >
             编辑
+          </Link>
+          <Link
+            theme="primary"
+            hover="color"
+            onClick={() => handleNotes(row)}
+          >
+            笔记管理
           </Link>
           <Popconfirm content={`确定要删除《${row.title}》吗？此操作不可恢复。`} onConfirm={() => handleDelete(row)}>
             <Link theme="danger" hover="color">
@@ -253,6 +270,83 @@ const Movies = () => {
       current: 1,
       pageSize
     });
+  };
+
+  // 添加笔记管理相关函数
+  const handleNotes = async (movie) => {
+    setCurrentMovie(movie);
+    setNotesVisible(true);
+    try {
+      const response = await request.get(`/movies/${movie._id}`);
+      setNotes(response.notes || []);
+    } catch (error) {
+      console.error('获取笔记列表失败:', error);
+      MessagePlugin.error('获取笔记列表失败');
+    }
+  };
+
+  const handleAddNote = () => {
+    setCurrentNote(null);
+    noteForm.reset();
+    const now = new Date();
+    setNoteDate(now.toISOString().slice(0, 19).replace('T', ' '));
+    setNoteFormVisible(true);
+  };
+
+  const handleEditNote = async (note) => {
+    // 直接使用传入的note对象
+    setCurrentNote(note);
+    setNoteDate(note.date || new Date().toISOString().slice(0, 19).replace('T', ' '));
+    
+    // 设置表单值
+    noteForm.setFieldsValue({
+      title: note.title,
+      content: note.content,
+      date: note.date
+    });
+    
+    // 打开弹窗
+    setNoteFormVisible(true);
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await request.delete(`/movies/${currentMovie._id}/notes/${noteId}`);
+      MessagePlugin.success('删除笔记成功');
+      // 刷新笔记列表
+      const response = await request.get(`/movies/${currentMovie._id}`);
+      setNotes(response.notes || []);
+    } catch (error) {
+      console.error('删除笔记失败:', error);
+      MessagePlugin.error('删除笔记失败');
+    }
+  };
+
+  const handleNoteSubmit = async (e) => {
+    if (e.validateResult === true) {
+      try {
+        const data = {
+          ...e.fields,
+          date: noteDate
+        };
+        if (currentNote) {
+          // 更新笔记
+          await request.put(`/movies/${currentMovie._id}/notes/${currentNote._id}`, data);
+          MessagePlugin.success('更新笔记成功');
+        } else {
+          // 添加笔记
+          await request.post(`/movies/${currentMovie._id}/notes`, data);
+          MessagePlugin.success('添加笔记成功');
+        }
+        setNoteFormVisible(false);
+        // 刷新笔记列表
+        const response = await request.get(`/movies/${currentMovie._id}`);
+        setNotes(response.notes || []);
+      } catch (error) {
+        console.error('保存笔记失败:', error);
+        MessagePlugin.error('保存笔记失败');
+      }
+    }
   };
 
   return (
@@ -440,6 +534,165 @@ const Movies = () => {
             ]} />
           </FormItem>
           <FormItem statusIcon={false}>
+            <Button theme="primary" type="submit" block>
+              确定
+            </Button>
+          </FormItem>
+        </Form>
+      </Dialog>
+
+      {/* 笔记列表弹窗 */}
+      <Dialog
+        header={`${currentMovie?.title} - 笔记管理`}
+        visible={notesVisible}
+        onClose={() => {
+          setNotesVisible(false);
+          setCurrentMovie(null);
+          setNotes([]);
+        }}
+        width={800}
+        footer={false}
+      >
+        <div style={{ marginBottom: '16px' }}>
+          <Button theme="primary" onClick={handleAddNote}>
+            添加笔记
+          </Button>
+        </div>
+        <Table
+          data={notes}
+          columns={[
+            {
+              title: '标题',
+              colKey: 'title',
+              width: 300,
+            },
+            {
+              title: '日期',
+              colKey: 'date',
+              width: 180,
+              cell: ({ row }) => row.date || '-',
+            },
+            {
+              title: '操作',
+              colKey: 'operation',
+              width: 200,
+              cell: ({ row }) => (
+                <Space size="small">
+                  <Link theme="primary" hover="color" onClick={() => {
+                    setCurrentNote(row);
+                    setNoteDetailVisible(true);
+                  }}>
+                    查看内容
+                  </Link>
+                  <Link theme="primary" hover="color" onClick={() => handleEditNote(row)}>
+                    编辑
+                  </Link>
+                  <Popconfirm content="确定要删除这条笔记吗？" onConfirm={() => handleDeleteNote(row._id)}>
+                    <Link theme="danger" hover="color">
+                      删除
+                    </Link>
+                  </Popconfirm>
+                </Space>
+              ),
+            },
+          ]}
+          rowKey="_id"
+          pagination={false}
+          bordered
+        />
+      </Dialog>
+
+      {/* 笔记详情弹窗 */}
+      <Dialog
+        header="笔记详情"
+        visible={noteDetailVisible}
+        onClose={() => {
+          setNoteDetailVisible(false);
+          setCurrentNote(null);
+        }}
+        width={600}
+        footer={false}
+      >
+        {currentNote && (
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>标题</div>
+              <div>{currentNote.title}</div>
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>内容</div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{currentNote.content}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>日期</div>
+              <div>{currentNote.date}</div>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* 笔记表单弹窗 */}
+      <Dialog
+        header={currentNote ? '编辑笔记' : '添加笔记'}
+        visible={noteFormVisible}
+        onClose={() => {
+          setNoteFormVisible(false);
+          setCurrentNote(null);
+          noteForm.reset();
+          setNoteDate(new Date().toISOString().slice(0, 19).replace('T', ' '));
+        }}
+        onOpened={() => {
+          if (currentNote) {
+            noteForm.setFieldsValue({
+              title: currentNote.title,
+              content: currentNote.content,
+              date: currentNote.date
+            });
+          }
+        }}
+        width={600}
+        footer={false}
+      >
+        <Form
+          form={noteForm}
+          onSubmit={handleNoteSubmit}
+          labelWidth={80}
+          labelAlign="right"
+        >
+          <FormItem
+            label="标题"
+            name="title"
+            rules={[{ required: true, message: '请输入笔记标题' }]}
+          >
+            <Input placeholder="请输入笔记标题" />
+          </FormItem>
+          <FormItem
+            label="内容"
+            name="content"
+            rules={[{ required: true, message: '请输入笔记内容' }]}
+          >
+            <Textarea placeholder="请输入笔记内容" rows={6} />
+          </FormItem>
+          <FormItem
+            label="日期"
+            name="date"
+            rules={[{ required: true, message: '请选择日期' }]}
+          >
+            <DatePicker
+              enableTimePicker
+              value={noteDate}
+              onChange={(value) => setNoteDate(value)}
+              allowInput
+              clearable
+              format="YYYY-MM-DD HH:mm:ss"
+              onBlur={() => {
+                if (!noteDate) {
+                  setNoteDate(new Date().toISOString().slice(0, 19).replace('T', ' '));
+                }
+              }}
+            />
+          </FormItem>
+          <FormItem>
             <Button theme="primary" type="submit" block>
               确定
             </Button>

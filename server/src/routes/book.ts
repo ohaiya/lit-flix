@@ -9,6 +9,8 @@ import {
   deleteBook,
   addNote,
   deleteNote,
+  getNote,
+  updateNote,
 } from '../controllers/bookController';
 import {
   createBookValidator,
@@ -306,5 +308,83 @@ router.post('/:id/notes', auth, addNoteValidator, validate, addNote);
  *         description: 书籍或笔记不存在
  */
 router.delete('/:id/notes/:noteId', auth, deleteNoteValidator, validate, deleteNote);
+
+/**
+ * @swagger
+ * /api/books/{id}/notes/{noteId}:
+ *   get:
+ *     summary: 获取笔记详情
+ *     tags: [书籍]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 书籍ID
+ *       - in: path
+ *         name: noteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 笔记ID
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *       404:
+ *         description: 书籍或笔记不存在
+ */
+router.get('/:id/notes/:noteId', getNote);
+
+/**
+ * @swagger
+ * /api/books/{id}/notes/{noteId}:
+ *   put:
+ *     summary: 更新笔记
+ *     tags: [书籍]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 书籍ID
+ *       - in: path
+ *         name: noteId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 笔记ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *               - date
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: 笔记标题
+ *               content:
+ *                 type: string
+ *                 description: 笔记内容
+ *               date:
+ *                 type: string
+ *                 description: 日期
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ *       401:
+ *         description: 未授权
+ *       404:
+ *         description: 书籍或笔记不存在
+ */
+router.put('/:id/notes/:noteId', auth, updateNote);
 
 export default router; 

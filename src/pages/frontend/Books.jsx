@@ -301,11 +301,6 @@ const Books = () => {
     setExpandedNoteIndex(index);
   };
 
-  // 获取书籍的读书笔记
-  const getBookNotes = (bookId) => {
-    return bookNotes[bookId] || [];
-  };
-
   return (
     <div className="books">
       {bookGroups.map((group) => (
@@ -326,7 +321,7 @@ const Books = () => {
         {selectedBook && (
           <BookDetail
             book={selectedBook}
-            notes={getBookNotes(selectedBook._id)}
+            notes={selectedBook.notes || []}
             expandedNoteIndex={expandedNoteIndex}
             onNoteClick={handleNoteClick}
           />

@@ -184,4 +184,66 @@ export const deleteNote = async (req: Request, res: Response): Promise<void> => 
     console.error('删除笔记失败:', error);
     ResponseUtil.error(res, '删除笔记失败');
   }
+};
+
+// 获取笔记详情
+export const getNote = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      ResponseUtil.notFound(res, '书籍不存在');
+      return;
+    }
+
+    const note = book.notes.find(
+      note => note._id.toString() === req.params.noteId
+    );
+
+    if (!note) {
+      ResponseUtil.notFound(res, '笔记不存在');
+      return;
+    }
+
+    ResponseUtil.success(res, note, '获取笔记详情成功');
+  } catch (error) {
+    console.error('获取笔记详情失败:', error);
+    ResponseUtil.error(res, '获取笔记详情失败');
+  }
+};
+
+// 更新笔记
+export const updateNote = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      ResponseUtil.notFound(res, '书籍不存在');
+      return;
+    }
+
+    const noteIndex = book.notes.findIndex(
+      note => note._id.toString() === req.params.noteId
+    );
+
+    if (noteIndex === -1) {
+      ResponseUtil.notFound(res, '笔记不存在');
+      return;
+    }
+
+    // 更新笔记内容
+    book.notes[noteIndex] = {
+      ...book.notes[noteIndex].toObject(),
+      ...req.body
+    };
+
+    await book.save();
+
+    ResponseUtil.success(res, book.notes[noteIndex], '更新笔记成功');
+  } catch (error) {
+    console.error('更新笔记失败:', error);
+    if (error.name === 'ValidationError') {
+      ResponseUtil.validationError(res, error.message);
+    } else {
+      ResponseUtil.error(res, '更新笔记失败');
+    }
+  }
 }; 
