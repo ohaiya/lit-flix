@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 import {
   Table,
   Button,
@@ -50,7 +51,7 @@ const Books = () => {
   const [noteForm] = Form.useForm();
   const [currentNote, setCurrentNote] = useState(null);
   const [notes, setNotes] = useState([]);
-  const [noteDate, setNoteDate] = useState(new Date().toISOString().slice(0, 19).replace('T', ' '));
+  const [noteDate, setNoteDate] = useState('');
   const [noteDetailVisible, setNoteDetailVisible] = useState(false);
 
   const columns = [
@@ -272,29 +273,25 @@ const Books = () => {
 
   const handleAddNote = () => {
     setCurrentNote(null);
-    noteForm.reset();
-    const now = new Date();
-    setNoteDate(now.toISOString().slice(0, 19).replace('T', ' '));
+    const today = dayjs().format('YYYY-MM-DD');
+    setNoteDate(today);
+    noteForm.setFieldsValue({
+      date: today
+    });
     setNoteFormVisible(true);
   };
 
   const handleEditNote = async (note) => {
     try {
-      // 获取笔记详情
       const noteDetail = await request.get(`/books/${currentBook._id}/notes/${note._id}`);
-      
-      // 设置当前笔记和日期
       setCurrentNote(noteDetail);
-      setNoteDate(noteDetail.date || new Date().toISOString().slice(0, 19).replace('T', ' '));
-      
-      // 设置表单值
+      const date = noteDetail.date || dayjs().format('YYYY-MM-DD');
+      setNoteDate(date);
       noteForm.setFieldsValue({
         title: noteDetail.title,
         content: noteDetail.content,
-        date: noteDetail.date
+        date: date
       });
-      
-      // 打开弹窗
       setNoteFormVisible(true);
     } catch (error) {
       console.error('获取笔记详情失败:', error);
@@ -320,19 +317,16 @@ const Books = () => {
       try {
         const data = {
           ...e.fields,
-          date: noteDate // 使用选择的日期时间
+          date: noteDate // DatePicker已经返回格式化的日期字符串，不需要再次格式化
         };
         if (currentNote) {
-          // 更新笔记
           await request.put(`/books/${currentBook._id}/notes/${currentNote._id}`, data);
           MessagePlugin.success('更新笔记成功');
         } else {
-          // 添加笔记
           await request.post(`/books/${currentBook._id}/notes`, data);
           MessagePlugin.success('添加笔记成功');
         }
         setNoteFormVisible(false);
-        // 刷新笔记列表
         const response = await request.get(`/books/${currentBook._id}`);
         setNotes(response.notes || []);
       } catch (error) {
@@ -619,14 +613,20 @@ const Books = () => {
           setNoteFormVisible(false);
           setCurrentNote(null);
           noteForm.reset();
-          setNoteDate(new Date().toISOString().slice(0, 19).replace('T', ' '));
+          const today = dayjs().format('YYYY-MM-DD');
+          setNoteDate(today);
+          noteForm.setFieldsValue({
+            date: today
+          });
         }}
         onOpened={() => {
           if (currentNote) {
+            const date = currentNote.date || dayjs().format('YYYY-MM-DD');
+            setNoteDate(date);
             noteForm.setFieldsValue({
               title: currentNote.title,
               content: currentNote.content,
-              date: currentNote.date
+              date: date
             });
           }
         }}
@@ -658,19 +658,16 @@ const Books = () => {
             name="date"
             rules={[{ required: true, message: '请选择日期' }]}
           >
-            <DatePicker
-              enableTimePicker
-              value={noteDate}
-              onChange={(value) => setNoteDate(value)}
-              allowInput
-              clearable
-              format="YYYY-MM-DD HH:mm:ss"
-              onBlur={() => {
-                if (!noteDate) {
-                  setNoteDate(new Date().toISOString().slice(0, 19).replace('T', ' '));
-                }
-              }}
-            />
+            <div>
+              <DatePicker
+                value={noteDate}
+                onChange={(value) => {
+                  setNoteDate(value);
+                  noteForm.setFieldsValue({ date: value });
+                }}
+                format="YYYY-MM-DD"
+              />
+            </div>
           </FormItem>
           <FormItem>
             <Button theme="primary" type="submit" block>
