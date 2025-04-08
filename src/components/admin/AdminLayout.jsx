@@ -10,17 +10,14 @@ const { MenuItem } = Menu;
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [activeMenu, setActiveMenu] = useState(() => {
+    const path = location.pathname.split('/').pop();
+    return path === 'admin' || !path ? 'dashboard' : path;
+  });
 
   useEffect(() => {
-    // 从路径中提取当前页面
     const path = location.pathname.split('/').pop();
-    if (path) {
-      setActiveMenu(path);
-    } else {
-      // 如果是 /admin，设置为 dashboard
-      setActiveMenu('dashboard');
-    }
+    setActiveMenu(path === 'admin' || !path ? 'dashboard' : path);
   }, [location.pathname]);
 
   const handleMenuClick = (value) => {
