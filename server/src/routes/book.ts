@@ -21,8 +21,15 @@ import {
   addNoteValidator,
   deleteNoteValidator,
 } from '../middlewares/validators/bookValidators';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+import { ResponseUtil } from '../utils/response';
 
 const router = express.Router();
+const writeFile = promisify(fs.writeFile);
+const mkdir = promisify(fs.mkdir);
 
 /**
  * @swagger
@@ -386,5 +393,102 @@ router.get('/:id/notes/:noteId', getNote);
  *         description: 书籍或笔记不存在
  */
 router.put('/:id/notes/:noteId', auth, updateNote);
+
+/**
+ * @swagger
+ * /api/books/douban-import:
+ *   post:
+ *     summary: 从豆瓣导入图书封面
+ *     tags: [书籍]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - bookId
+ *             properties:
+ *               bookId:
+ *                 type: string
+ *                 description: 豆瓣图书ID或链接
+ *                 example: "37205633"
+ *     responses:
+ *       200:
+ *         description: 导入成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "封面导入成功"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     coverUrl:
+ *                       type: string
+ *                       example: "/uploads/cover/37205633.jpg"
+ *       400:
+ *         description: 参数验证失败
+ *       404:
+ *         description: 未找到封面图片
+ *       500:
+ *         description: 服务器内部错误
+ */
+router.post('/douban-import', async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    if (!bookId) {
+      return ResponseUtil.validationError(res, '豆瓣图书ID不能为空');
+    }
+
+    const doubanUrl = `https://book.douban.com/subject/${bookId}/`;
+    
+    const response = await axios.get(doubanUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      }
+    });
+
+    const coverMatch = response.data.match(/<a class="nbg"[^>]*href="([^"]+)"/);
+    if (!coverMatch) {
+      return ResponseUtil.notFound(res, '未找到封面图片');
+    }
+
+    const coverUrl = coverMatch[1];
+    
+    const imageResponse = await axios.get(coverUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': doubanUrl,
+      }
+    });
+
+    const uploadDir = path.join(__dirname, '../../uploads/cover');
+    if (!fs.existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
+    }
+
+    const ext = path.extname(coverUrl) || '.jpg';
+    const fileName = `${bookId}${ext}`;
+    const filePath = path.join(uploadDir, fileName);
+
+    await writeFile(filePath, imageResponse.data);
+
+    const coverUrlPath = `/uploads/cover/${fileName}`;
+    ResponseUtil.success(res, { coverUrl: coverUrlPath }, '封面导入成功');
+  } catch (error) {
+    console.error('导入豆瓣封面失败:', error);
+    ResponseUtil.error(res, '导入豆瓣封面失败');
+  }
+});
 
 export default router; 

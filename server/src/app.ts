@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
+import path from 'path';
 
 // 导入路由
 import authRoutes from './routes/auth';
@@ -27,6 +28,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// 静态文件服务
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 数据库连接
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lit-flix')

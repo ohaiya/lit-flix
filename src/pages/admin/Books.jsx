@@ -17,8 +17,8 @@ import {
   Popconfirm,
   Link,
   Card,
-  Collapse,
   DatePicker,
+  InputAdornment,
 } from 'tdesign-react';
 import { AddIcon, RefreshIcon, ChevronRightIcon, ChevronDownIcon, FileIcon } from 'tdesign-icons-react';
 import request from '../../utils/request';
@@ -53,6 +53,10 @@ const Books = () => {
   const [notes, setNotes] = useState([]);
   const [noteDate, setNoteDate] = useState('');
   const [noteDetailVisible, setNoteDetailVisible] = useState(false);
+
+  const [doubanDialogVisible, setDoubanDialogVisible] = useState(false);
+  const [doubanInput, setDoubanInput] = useState('');
+  const [isLoadingDouban, setIsLoadingDouban] = useState(false);
 
   const columns = [
     {
@@ -336,16 +340,55 @@ const Books = () => {
     }
   };
 
+  const handleDoubanImport = async () => {
+    if (!doubanInput) {
+      MessagePlugin.warning('请输入豆瓣图书链接或ID');
+      return;
+    }
+
+    let bookId = doubanInput;
+    if (doubanInput.includes('douban.com')) {
+      const match = doubanInput.match(/subject\/(\d+)/);
+      if (!match) {
+        MessagePlugin.warning('无效的豆瓣图书链接');
+        return;
+      }
+      bookId = match[1];
+    }
+
+    setIsLoadingDouban(true);
+    try {
+      const response = await request.post('/books/douban-import', { bookId });
+      form.setFieldsValue({
+        cover: response.coverUrl
+      });
+      setDoubanDialogVisible(false);
+      setDoubanInput('');
+      MessagePlugin.success('封面导入成功');
+    } catch (error) {
+      MessagePlugin.error('导入豆瓣封面失败');
+    } finally {
+      setIsLoadingDouban(false);
+    }
+  };
+
   return (
     <div className="admin-books">
       <div className="header-container">
-        <Row justify="space-between" align="middle" style={{ marginBottom: '16px' }}>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: "16px" }}
+        >
           <Col>
             <h3>书籍管理</h3>
           </Col>
           <Col>
             <Space>
-              <Button icon={<RefreshIcon />} onClick={() => fetchBooks({ current, pageSize })}>
+              <Button
+                icon={<RefreshIcon />}
+                onClick={() => fetchBooks({ current, pageSize })}
+              >
                 刷新
               </Button>
               <Button icon={<AddIcon />} theme="primary" onClick={handleAdd}>
@@ -361,14 +404,14 @@ const Books = () => {
           actions={
             <ChevronDownIcon
               style={{
-                cursor: 'pointer',
-                transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 0.3s'
+                cursor: "pointer",
+                transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
+                transition: "transform 0.3s",
               }}
               onClick={() => setExpanded(!expanded)}
             />
           }
-          style={{ marginBottom: expanded ? '16px' : 0 }}
+          style={{ marginBottom: expanded ? "16px" : 0 }}
         >
           {expanded && (
             <Form
@@ -378,32 +421,42 @@ const Books = () => {
               layout="inline"
             >
               <FormItem label="书名" name="title">
-                <Input placeholder="请输入书名" style={{ width: '200px' }} />
+                <Input placeholder="请输入书名" style={{ width: "200px" }} />
               </FormItem>
               <FormItem label="副标题" name="subtitle">
-                <Input placeholder="请输入副标题" style={{ width: '200px' }} />
+                <Input placeholder="请输入副标题" style={{ width: "200px" }} />
               </FormItem>
               <FormItem label="作者" name="author">
-                <Input placeholder="请输入作者" style={{ width: '200px' }} />
+                <Input placeholder="请输入作者" style={{ width: "200px" }} />
               </FormItem>
               <FormItem label="出版社" name="publisher">
-                <Input placeholder="请输入出版社" style={{ width: '200px' }} />
+                <Input placeholder="请输入出版社" style={{ width: "200px" }} />
               </FormItem>
               <FormItem label="评分" name="rating">
-                <InputNumber placeholder="最低评分" min={0} max={5} style={{ width: '200px' }} />
+                <InputNumber
+                  placeholder="最低评分"
+                  min={0}
+                  max={5}
+                  style={{ width: "200px" }}
+                />
               </FormItem>
               <FormItem label="状态" name="status">
-                <Select options={statusOptions} placeholder="请选择状态" clearable style={{ width: '200px' }} />
+                <Select
+                  options={statusOptions}
+                  placeholder="请选择状态"
+                  clearable
+                  style={{ width: "200px" }}
+                />
               </FormItem>
               <FormItem label="收藏" name="isFavorite">
                 <Select
                   options={[
-                    { label: '是', value: true },
-                    { label: '否', value: false }
+                    { label: "是", value: true },
+                    { label: "否", value: false },
                   ]}
                   placeholder="请选择"
                   clearable
-                  style={{ width: '200px' }}
+                  style={{ width: "200px" }}
                 />
               </FormItem>
               <FormItem>
@@ -411,9 +464,7 @@ const Books = () => {
                   <Button theme="primary" type="submit">
                     搜索
                   </Button>
-                  <Button onClick={handleReset}>
-                    重置
-                  </Button>
+                  <Button onClick={handleReset}>重置</Button>
                 </Space>
               </FormItem>
             </Form>
@@ -439,7 +490,7 @@ const Books = () => {
       />
 
       <Dialog
-        header={currentBook ? '编辑书籍' : '添加书籍'}
+        header={currentBook ? "编辑书籍" : "添加书籍"}
         visible={visible}
         onClose={() => {
           setVisible(false);
@@ -465,7 +516,7 @@ const Books = () => {
           <FormItem
             label="书名"
             name="title"
-            rules={[{ required: true, message: '请输入书名' }]}
+            rules={[{ required: true, message: "请输入书名" }]}
           >
             <Input placeholder="请输入书名" />
           </FormItem>
@@ -475,37 +526,53 @@ const Books = () => {
           <FormItem
             label="作者"
             name="author"
-            rules={[{ required: true, message: '请输入作者' }]}
+            rules={[{ required: true, message: "请输入作者" }]}
           >
             <Input placeholder="请输入作者" />
           </FormItem>
           <FormItem label="出版社" name="publisher">
             <Input placeholder="请输入出版社" />
           </FormItem>
-          <FormItem 
-            label="封面" 
-            name="cover"
-          >
-            <Input placeholder="请输入封面图片URL" />
+          <FormItem label="封面" name="cover" initialValue="">
+            <InputAdornment
+              style={{ width: "100%" }}
+              append={
+                <Button
+                  theme="primary"
+                  variant="outline"
+                  onClick={() => setDoubanDialogVisible(true)}
+                >
+                  从豆瓣导入
+                </Button>
+              }
+            >
+              <Input placeholder="请输入封面图片URL" />
+            </InputAdornment>
           </FormItem>
           <FormItem label="评分" name="rating">
             <div>
               <Rate allowHalf clearable />
-              <div style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>（评分后再次点击可清除评分）</div>
+              <div
+                style={{ color: "#999", fontSize: "12px", marginTop: "4px" }}
+              >
+                （评分后再次点击可清除评分）
+              </div>
             </div>
           </FormItem>
-          <FormItem 
-            label="状态" 
+          <FormItem
+            label="状态"
             name="status"
-            rules={[{ required: true, message: '请选择状态' }]}
+            rules={[{ required: true, message: "请选择状态" }]}
           >
             <Select options={statusOptions} />
           </FormItem>
           <FormItem label="收藏" name="isFavorite">
-            <Select options={[
-              { label: '是', value: true },
-              { label: '否', value: false }
-            ]} />
+            <Select
+              options={[
+                { label: "是", value: true },
+                { label: "否", value: false },
+              ]}
+            />
           </FormItem>
           <FormItem statusIcon={false}>
             <Button theme="primary" type="submit" block>
@@ -527,7 +594,7 @@ const Books = () => {
         width={800}
         footer={false}
       >
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: "16px" }}>
           <Button theme="primary" onClick={handleAddNote}>
             添加笔记
           </Button>
@@ -536,32 +603,43 @@ const Books = () => {
           data={notes}
           columns={[
             {
-              title: '标题',
-              colKey: 'title',
+              title: "标题",
+              colKey: "title",
               width: 300,
             },
             {
-              title: '日期',
-              colKey: 'date',
+              title: "日期",
+              colKey: "date",
               width: 180,
-              cell: ({ row }) => row.date || '-',
+              cell: ({ row }) => row.date || "-",
             },
             {
-              title: '操作',
-              colKey: 'operation',
+              title: "操作",
+              colKey: "operation",
               width: 200,
               cell: ({ row }) => (
                 <Space size="small">
-                  <Link theme="primary" hover="color" onClick={() => {
-                    setCurrentNote(row);
-                    setNoteDetailVisible(true);
-                  }}>
+                  <Link
+                    theme="primary"
+                    hover="color"
+                    onClick={() => {
+                      setCurrentNote(row);
+                      setNoteDetailVisible(true);
+                    }}
+                  >
                     查看内容
                   </Link>
-                  <Link theme="primary" hover="color" onClick={() => handleEditNote(row)}>
+                  <Link
+                    theme="primary"
+                    hover="color"
+                    onClick={() => handleEditNote(row)}
+                  >
                     编辑
                   </Link>
-                  <Popconfirm content="确定要删除这条笔记吗？" onConfirm={() => handleDeleteNote(row._id)}>
+                  <Popconfirm
+                    content="确定要删除这条笔记吗？"
+                    onConfirm={() => handleDeleteNote(row._id)}
+                  >
                     <Link theme="danger" hover="color">
                       删除
                     </Link>
@@ -588,17 +666,43 @@ const Books = () => {
         footer={false}
       >
         {currentNote && (
-          <div style={{ padding: '20px' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>标题</div>
+          <div style={{ padding: "20px" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                }}
+              >
+                标题
+              </div>
               <div>{currentNote.title}</div>
             </div>
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>内容</div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{currentNote.content}</div>
+            <div style={{ marginBottom: "16px" }}>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                }}
+              >
+                内容
+              </div>
+              <div style={{ whiteSpace: "pre-wrap" }}>
+                {currentNote.content}
+              </div>
             </div>
             <div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>日期</div>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                }}
+              >
+                日期
+              </div>
               <div>{currentNote.date}</div>
             </div>
           </div>
@@ -607,26 +711,26 @@ const Books = () => {
 
       {/* 笔记表单弹窗 */}
       <Dialog
-        header={currentNote ? '编辑笔记' : '添加笔记'}
+        header={currentNote ? "编辑笔记" : "添加笔记"}
         visible={noteFormVisible}
         onClose={() => {
           setNoteFormVisible(false);
           setCurrentNote(null);
           noteForm.reset();
-          const today = dayjs().format('YYYY-MM-DD');
+          const today = dayjs().format("YYYY-MM-DD");
           setNoteDate(today);
           noteForm.setFieldsValue({
-            date: today
+            date: today,
           });
         }}
         onOpened={() => {
           if (currentNote) {
-            const date = currentNote.date || dayjs().format('YYYY-MM-DD');
+            const date = currentNote.date || dayjs().format("YYYY-MM-DD");
             setNoteDate(date);
             noteForm.setFieldsValue({
               title: currentNote.title,
               content: currentNote.content,
-              date: date
+              date: date,
             });
           }
         }}
@@ -642,21 +746,21 @@ const Books = () => {
           <FormItem
             label="标题"
             name="title"
-            rules={[{ required: true, message: '请输入笔记标题' }]}
+            rules={[{ required: true, message: "请输入笔记标题" }]}
           >
             <Input placeholder="请输入笔记标题" />
           </FormItem>
           <FormItem
             label="内容"
             name="content"
-            rules={[{ required: true, message: '请输入笔记内容' }]}
+            rules={[{ required: true, message: "请输入笔记内容" }]}
           >
             <Textarea placeholder="请输入笔记内容" rows={6} />
           </FormItem>
           <FormItem
             label="日期"
             name="date"
-            rules={[{ required: true, message: '请选择日期' }]}
+            rules={[{ required: true, message: "请选择日期" }]}
           >
             <div>
               <DatePicker
@@ -675,6 +779,55 @@ const Books = () => {
             </Button>
           </FormItem>
         </Form>
+      </Dialog>
+
+      {/* 豆瓣导入弹窗 */}
+      <Dialog
+        header="从豆瓣导入封面"
+        visible={doubanDialogVisible}
+        onClose={() => {
+          setDoubanDialogVisible(false);
+          setDoubanInput("");
+        }}
+        closeOnOverlayClick={false}
+        destroyOnClose
+        width={500}
+        footer={
+          <Space>
+            <Button
+              theme="primary"
+              onClick={handleDoubanImport}
+              loading={isLoadingDouban}
+            >
+              {isLoadingDouban ? "正在获取" : "确定"}
+            </Button>
+            <Button
+              ghost
+              onClick={() => {
+                setDoubanDialogVisible(false);
+                setDoubanInput("");
+              }}
+            >
+              取消
+            </Button>
+          </Space>
+        }
+      >
+        <div style={{ marginBottom: "16px" }}>
+          <p>请输入豆瓣图书链接或ID：</p>
+          <p style={{ color: "#999", fontSize: "12px", marginTop: "4px" }}>
+            支持格式：
+            <br />
+            1. 豆瓣图书ID：37205633
+            <br />
+            2. 豆瓣图书链接：https://book.douban.com/subject/37205633/
+          </p>
+        </div>
+        <Input
+          value={doubanInput}
+          onChange={(value) => setDoubanInput(value)}
+          placeholder="请输入豆瓣图书链接或ID"
+        />
       </Dialog>
     </div>
   );
