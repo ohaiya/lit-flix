@@ -4,12 +4,10 @@ services:
     image: mongodb/mongodb-community-server:latest
     container_name: litflix-mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGODB_INITDB_ROOT_USERNAME: root
+      MONGODB_INITDB_ROOT_PASSWORD: root
     volumes:
       - mongodb_data:/data/db
-    ports:
-      - "27017:27017"
     networks:
       - litflix-network
 
@@ -17,9 +15,10 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: litflix-server
+    image: ohaiya/litflix-svr:latest
+    container_name: litflix-svr
     environment:
-      - MONGODB_URI=mongodb://admin:admin123@mongodb:27017/lit-flix?authSource=admin
+      - MONGODB_URI=mongodb://root:root@litflix-mongodb:27017/lit-flix?authSource=admin
       - JWT_SECRET=1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=admin
@@ -28,6 +27,8 @@ services:
       - "3001:3001"
     depends_on:
       - mongodb
+    volumes:
+      - litflix_storage:/app/uploads
     networks:
       - litflix-network
 
@@ -35,6 +36,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ohaiya/litflix-ui:latest
     container_name: litflix-ui
     # environment:
     #   - NGINX_PORT=5123
@@ -53,4 +55,6 @@ networks:
 
 volumes:
   mongodb_data:
+    driver: local
+  litflix_storage:
     driver: local
