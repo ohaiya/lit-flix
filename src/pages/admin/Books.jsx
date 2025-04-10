@@ -549,15 +549,14 @@ const Books = () => {
               <Input placeholder="请输入封面图片URL" />
             </InputAdornment>
           </FormItem>
-          <FormItem label="评分" name="rating">
-            <div>
-              <Rate allowHalf clearable />
-              <div
-                style={{ color: "#999", fontSize: "12px", marginTop: "4px" }}
-              >
-                （评分后再次点击可清除评分）
-              </div>
-            </div>
+          <FormItem label="评分" name="rating" help="评分后再次点击可清除评分">
+              <Rate 
+                allowHalf 
+                clearable 
+                onChange={(value) => {
+                  form.setFieldsValue({ rating: value });
+                }}
+              />
           </FormItem>
           <FormItem
             label="状态"
