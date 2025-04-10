@@ -20,6 +20,11 @@ import {
   addNoteValidator,
   deleteNoteValidator,
 } from '../middlewares/validators/movieValidators';
+import axios from 'axios';
+import path from 'path';
+import fs from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
+import { ResponseUtil } from '../utils/response';
 
 const router = express.Router();
 
@@ -347,5 +352,102 @@ router.delete('/:id/notes/:noteId', auth, deleteNoteValidator, validate, deleteN
  *         description: 电影或笔记不存在
  */
 router.put('/:id/notes/:noteId', auth, updateNote);
+
+/**
+ * @swagger
+ * /api/movies/douban-import:
+ *   post:
+ *     summary: 从豆瓣导入电影海报
+ *     tags: [电影]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - movieId
+ *             properties:
+ *               movieId:
+ *                 type: string
+ *                 description: 豆瓣电影ID或链接
+ *                 example: "36820950"
+ *     responses:
+ *       200:
+ *         description: 导入成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 0
+ *                 message:
+ *                   type: string
+ *                   example: "海报导入成功"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     posterUrl:
+ *                       type: string
+ *                       example: "/uploads/poster/36820950.jpg"
+ *       400:
+ *         description: 参数验证失败
+ *       404:
+ *         description: 未找到海报图片
+ *       500:
+ *         description: 服务器内部错误
+ */
+router.post('/douban-import', async (req, res) => {
+  try {
+    const { movieId } = req.body;
+    if (!movieId) {
+      return ResponseUtil.validationError(res, '豆瓣电影ID不能为空');
+    }
+
+    const doubanUrl = `https://movie.douban.com/subject/${movieId}/`;
+    
+    const response = await axios.get(doubanUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      }
+    });
+
+    const posterMatch = response.data.match(/<div id="mainpic">\s*<a class="nbgnbg"[^>]*>\s*<img[^>]*src="([^"]+)"/);
+    if (!posterMatch) {
+      return ResponseUtil.notFound(res, '未找到海报图片');
+    }
+
+    const posterUrl = posterMatch[1];
+    
+    const imageResponse = await axios.get(posterUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': doubanUrl,
+      }
+    });
+
+    const uploadDir = path.join(__dirname, '../../uploads/poster');
+    if (!fs.existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
+    }
+
+    const ext = path.extname(posterUrl) || '.jpg';
+    const fileName = `${movieId}${ext}`;
+    const filePath = path.join(uploadDir, fileName);
+
+    await writeFile(filePath, imageResponse.data);
+
+    const posterUrlPath = `/uploads/poster/${fileName}`;
+    ResponseUtil.success(res, { posterUrl: posterUrlPath }, '海报导入成功');
+  } catch (error) {
+    console.error('导入豆瓣海报失败:', error);
+    ResponseUtil.error(res, '导入豆瓣海报失败');
+  }
+});
 
 export default router; 

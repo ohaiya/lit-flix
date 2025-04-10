@@ -18,6 +18,7 @@ import {
   Card,
   Textarea,
   DatePicker,
+  InputAdornment,
 } from 'tdesign-react';
 import { AddIcon, RefreshIcon, ChevronDownIcon } from 'tdesign-icons-react';
 import request from '../../utils/request';
@@ -48,6 +49,7 @@ const Movies = () => {
   const [total, setTotal] = useState(0);
   const [searchForm] = Form.useForm();
   const [expanded, setExpanded] = useState(true);
+  const [year, setYear] = useState('');
 
   // 笔记管理相关状态
   const [notesVisible, setNotesVisible] = useState(false);
@@ -57,6 +59,10 @@ const Movies = () => {
   const [notes, setNotes] = useState([]);
   const [noteDate, setNoteDate] = useState('');
   const [noteDetailVisible, setNoteDetailVisible] = useState(false);
+
+  const [doubanDialogVisible, setDoubanDialogVisible] = useState(false);
+  const [doubanInput, setDoubanInput] = useState('');
+  const [isLoadingDouban, setIsLoadingDouban] = useState(false);
 
   const columns = [
     {
@@ -347,6 +353,38 @@ const Movies = () => {
     }
   };
 
+  const handleDoubanImport = async () => {
+    if (!doubanInput) {
+      MessagePlugin.warning('请输入豆瓣电影链接或ID');
+      return;
+    }
+
+    let movieId = doubanInput;
+    if (doubanInput.includes('douban.com')) {
+      const match = doubanInput.match(/subject\/(\d+)/);
+      if (!match) {
+        MessagePlugin.warning('无效的豆瓣电影链接');
+        return;
+      }
+      movieId = match[1];
+    }
+
+    setIsLoadingDouban(true);
+    try {
+      const response = await request.post('/movies/douban-import', { movieId });
+      form.setFieldsValue({
+        cover: response.posterUrl
+      });
+      setDoubanDialogVisible(false);
+      setDoubanInput('');
+      MessagePlugin.success('海报导入成功');
+    } catch (error) {
+      MessagePlugin.error('导入豆瓣海报失败');
+    } finally {
+      setIsLoadingDouban(false);
+    }
+  };
+
   return (
     <div className="admin-movies">
       <div className="header-container">
@@ -456,11 +494,13 @@ const Movies = () => {
           setVisible(false);
           setCurrentMovie(null);
           form.reset();
+          setYear('');
         }}
         destroyOnClose
         onOpened={() => {
           if (currentMovie) {
             form.setFieldsValue(currentMovie);
+            setYear(currentMovie.year || '');
           }
         }}
         width={600}
@@ -490,9 +530,19 @@ const Movies = () => {
           <FormItem
             label="年份"
             name="year"
-            rules={[{ required: true, message: '请输入年份' }]}
+            rules={[{ required: true, message: '请选择年份' }]}
           >
-            <Input placeholder="请输入年份" />
+            <div>
+              <DatePicker
+                value={year}
+                onChange={(value) => {
+                  setYear(value);
+                  form.setFieldsValue({ year: value });
+                }}
+                format="YYYY"
+                mode="year"
+              />
+            </div>
           </FormItem>
           <FormItem
             label="地区"
@@ -506,10 +556,29 @@ const Movies = () => {
             name="cover"
             rules={[{ required: true, message: '请输入封面图片URL' }]}
           >
-            <Input placeholder="请输入封面图片URL" />
+            <InputAdornment
+              style={{ width: "100%" }}
+              append={
+                <Button
+                  theme="primary"
+                  variant="outline"
+                  onClick={() => setDoubanDialogVisible(true)}
+                >
+                  从豆瓣导入
+                </Button>
+              }
+            >
+              <Input placeholder="请输入封面图片URL" />
+            </InputAdornment>
           </FormItem>
-          <FormItem label="评分" name="rating">
-            <Rate allowHalf />
+          <FormItem label="评分" name="rating" help="评分后再次点击可清除评分">
+            <Rate 
+              allowHalf 
+              clearable 
+              onChange={(value) => {
+                form.setFieldsValue({ rating: value });
+              }}
+            />
           </FormItem>
           <FormItem
             label="进度"
@@ -693,6 +762,55 @@ const Movies = () => {
             </Button>
           </FormItem>
         </Form>
+      </Dialog>
+
+      {/* 豆瓣导入弹窗 */}
+      <Dialog
+        header="从豆瓣导入海报"
+        visible={doubanDialogVisible}
+        onClose={() => {
+          setDoubanDialogVisible(false);
+          setDoubanInput("");
+        }}
+        closeOnOverlayClick={false}
+        destroyOnClose
+        width={500}
+        footer={
+          <Space>
+            <Button
+              theme="primary"
+              onClick={handleDoubanImport}
+              loading={isLoadingDouban}
+            >
+              {isLoadingDouban ? "正在获取" : "确定"}
+            </Button>
+            <Button
+              ghost
+              onClick={() => {
+                setDoubanDialogVisible(false);
+                setDoubanInput("");
+              }}
+            >
+              取消
+            </Button>
+          </Space>
+        }
+      >
+        <div style={{ marginBottom: "16px" }}>
+          <p>请输入豆瓣电影链接或ID：</p>
+          <p style={{ color: "#999", fontSize: "12px", marginTop: "4px" }}>
+            支持格式：
+            <br />
+            1. 豆瓣电影ID：36820950
+            <br />
+            2. 豆瓣电影链接：https://movie.douban.com/subject/36820950/
+          </p>
+        </div>
+        <Input
+          value={doubanInput}
+          onChange={(value) => setDoubanInput(value)}
+          placeholder="请输入豆瓣电影链接或ID"
+        />
       </Dialog>
     </div>
   );
