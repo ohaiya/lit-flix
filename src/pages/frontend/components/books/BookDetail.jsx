@@ -35,8 +35,8 @@ const BookDetail = ({ book, notes, expandedNoteIndex, onNoteClick }) => {
           <p className="books__review-author">{book.author}</p>
           <p className="books__review-publisher">{book.publisher}</p>
           <div className="books__review-rating">
-            <Rate value={book.rating} disabled size="small" />
-            <span>{book.rating === 0 ? '未评分' : book.rating}</span>
+            <Rate value={book.rating} disabled size="small" allowHalf />
+            <span>{book.rating === 0 ? '未评分' : Number(book.rating).toFixed(1)}</span>
           </div>
         </div>
       </div>
