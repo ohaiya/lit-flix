@@ -89,8 +89,8 @@ const MovieCard = ({ movie, onClick }) => {
           </div>
           {movie.status !== "wishlist" && (
             <div className="movies__rating">
-              <Rate value={movie.rating} disabled size="small" />
-              <span className="movies__rating-value">{movie.rating}</span>
+              <Rate value={movie.rating} disabled size="small" allowHalf />
+              <span className="movies__rating-value">{Number(movie.rating).toFixed(1)}</span>
             </div>
           )}
         </div>

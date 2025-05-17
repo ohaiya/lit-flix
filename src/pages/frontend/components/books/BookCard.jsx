@@ -27,7 +27,7 @@ const BookCard = ({ book, onClick }) => {
         <div className="books__rating">
           <Rate value={book.rating || 0} allowHalf disabled size="small" />
           <span className="books__rating-value">
-            {book.rating ? book.rating : '未评分'}
+            {book.rating ? Number(book.rating).toFixed(1) : '未评分'}
           </span>
         </div>
       </div>

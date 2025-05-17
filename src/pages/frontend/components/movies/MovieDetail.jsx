@@ -32,8 +32,8 @@ const MovieDetail = ({ movie, notes, expandedNoteIndex, onNoteClick }) => {
             <span className="movies__review-region">{movie.region}</span>
           </div>
           <div className="movies__review-rating">
-            <Rate value={movie.rating} disabled size="small" />
-            <span>{movie.rating === 0 ? '未评分' : movie.rating}</span>
+            <Rate value={movie.rating} disabled size="small" allowHalf />
+            <span>{movie.rating === 0 ? '未评分' : Number(movie.rating).toFixed(1)}</span>
           </div>
         </div>
       </div>
