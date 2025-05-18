@@ -49,7 +49,11 @@ const AdminLayout = () => {
       <Layout>
         <Header>
           <div className="header-right">
-            <div className="logout" onClick={handleLogout}>
+            <div className="menu-item" onClick={() => navigate('/')}>
+              <HomeIcon />
+              <span>首页</span>
+            </div>
+            <div className="menu-item" onClick={handleLogout}>
               <LogoutIcon />
               <span>退出登录</span>
             </div>
