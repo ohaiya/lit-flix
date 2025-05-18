@@ -90,7 +90,9 @@ const MovieCard = ({ movie, onClick }) => {
           {movie.status !== "wishlist" && (
             <div className="movies__rating">
               <Rate value={movie.rating} disabled size="small" allowHalf />
-              <span className="movies__rating-value">{Number(movie.rating).toFixed(1)}</span>
+              <span className="movies__rating-value">
+                {movie.rating ? Number(movie.rating).toFixed(1) : "未评分"}
+              </span>
             </div>
           )}
         </div>
