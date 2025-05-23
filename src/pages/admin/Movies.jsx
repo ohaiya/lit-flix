@@ -373,13 +373,18 @@ const Movies = () => {
     try {
       const response = await request.post('/movies/douban-import', { movieId });
       form.setFieldsValue({
-        cover: response.posterUrl
+        cover: response.posterUrl,
+        title: response.title,
+        region: response.region
       });
+      setYear(response.year);
+      form.setFieldsValue({ year: response.year });
+      
       setDoubanDialogVisible(false);
       setDoubanInput('');
-      MessagePlugin.success('海报导入成功');
+      MessagePlugin.success('豆瓣信息导入成功');
     } catch (error) {
-      MessagePlugin.error('导入豆瓣海报失败');
+      MessagePlugin.error('导入豆瓣信息失败');
     } finally {
       setIsLoadingDouban(false);
     }
@@ -535,12 +540,14 @@ const Movies = () => {
             <div>
               <DatePicker
                 value={year}
-                onChange={(value) => {
-                  setYear(value);
-                  form.setFieldsValue({ year: value });
+                onChange={(val) => {
+                  const yearStr = val ? dayjs(val).format('YYYY') : '';
+                  setYear(yearStr);
+                  form.setFieldsValue({ year: yearStr });
                 }}
                 format="YYYY"
                 mode="year"
+                enableTimePicker={false}
               />
             </div>
           </FormItem>

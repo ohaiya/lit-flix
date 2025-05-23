@@ -400,8 +400,8 @@ router.put('/:id/notes/:noteId', auth, updateNote);
  *         description: 服务器内部错误
  */
 router.post('/douban-import', async (req, res) => {
+  const { movieId } = req.body;
   try {
-    const { movieId } = req.body;
     if (!movieId) {
       return ResponseUtil.validationError(res, '豆瓣电影ID不能为空');
     }
@@ -416,10 +416,23 @@ router.post('/douban-import', async (req, res) => {
       }
     });
 
+    // 解析海报
     const posterMatch = response.data.match(/<div id="mainpic">\s*<a class="nbgnbg"[^>]*>\s*<img[^>]*src="([^"]+)"/);
     if (!posterMatch) {
       return ResponseUtil.notFound(res, '未找到海报图片');
     }
+
+    // 解析标题
+    const titleMatch = response.data.match(/<span property="v:itemreviewed">(.*?)<\/span>/);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+
+    // 解析年份
+    const yearMatch = response.data.match(/<span class="year">\((.*?)\)<\/span>/);
+    const year = yearMatch ? yearMatch[1].trim() : '';
+
+    // 解析地区
+    const regionMatch = response.data.match(/制片国家\/地区:<\/span>([^<]*?)(?:<br\/>|<\/div>)/);
+    const region = regionMatch ? regionMatch[1].trim() : '';
 
     const posterUrl = posterMatch[1];
     
@@ -443,7 +456,12 @@ router.post('/douban-import', async (req, res) => {
     await writeFile(filePath, imageResponse.data);
 
     const posterUrlPath = `/uploads/poster/${fileName}`;
-    ResponseUtil.success(res, { posterUrl: posterUrlPath }, '海报导入成功');
+    ResponseUtil.success(res, { 
+      posterUrl: posterUrlPath,
+      title,
+      year,
+      region
+    }, '海报导入成功');
   } catch (error) {
     console.error('导入豆瓣海报失败:', error);
     ResponseUtil.error(res, '导入豆瓣海报失败');
