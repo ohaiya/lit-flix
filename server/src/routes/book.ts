@@ -441,8 +441,8 @@ router.put('/:id/notes/:noteId', auth, updateNote);
  *         description: 服务器内部错误
  */
 router.post('/douban-import', async (req, res) => {
+  const { bookId } = req.body;
   try {
-    const { bookId } = req.body;
     if (!bookId) {
       return ResponseUtil.validationError(res, '豆瓣图书ID不能为空');
     }
@@ -457,9 +457,84 @@ router.post('/douban-import', async (req, res) => {
       }
     });
 
+    // 解析 JSON-LD 数据
+    const jsonLdMatch = response.data.match(/<script type="application\/ld\+json">\s*(.*?)\s*<\/script>/s);
+    let jsonLdData = null;
+    if (jsonLdMatch) {
+      try {
+        jsonLdData = JSON.parse(jsonLdMatch[1]);
+      } catch (e) {
+        console.error('JSON-LD 解析失败:', e);
+      }
+    }
+
+    // 解析封面
     const coverMatch = response.data.match(/<a class="nbg"[^>]*href="([^"]+)"/);
     if (!coverMatch) {
       return ResponseUtil.notFound(res, '未找到封面图片');
+    }
+
+    // 从 JSON-LD 或 HTML 中获取数据
+    let title = '';
+    let subtitle = '';
+    let author = '';
+    let publisher = '';
+
+    if (jsonLdData) {
+      // 从 JSON-LD 获取数据
+      title = jsonLdData.name || '';
+      
+      // 作者可能是字符串或数组
+      if (Array.isArray(jsonLdData.author)) {
+        author = jsonLdData.author.map((a: any) => a.name).join(' / ');
+      } else if (jsonLdData.author) {
+        author = jsonLdData.author.name || '';
+      }
+
+      publisher = jsonLdData.publisher || '';
+    }
+
+    // 如果 JSON-LD 没有数据，从 HTML 获取
+    if (!title) {
+      const titleMatch = response.data.match(/<h1>\s*<span[^>]*>([^<]+)<\/span>/);
+      title = titleMatch ? titleMatch[1].trim() : '';
+    }
+
+    // 副标题总是从 HTML 获取，因为 JSON-LD 中没有
+    const subtitleMatch = response.data.match(/副标题:<\/span>\s*([^<]*?)(?:<br\/>|<\/div>)/);
+    subtitle = subtitleMatch ? subtitleMatch[1].trim() : '';
+
+    // 如果 JSON-LD 中没有作者，从 HTML 获取
+    if (!author) {
+      const authorBlock = response.data.match(/作者:?<\/span>([\s\S]*?)(?:<br\/>|<\/div>)/);
+      if (authorBlock) {
+        const authorText = authorBlock[1];
+        const authorLinks = authorText.match(/<a[^>]*>([^<]+)<\/a>/g);
+        if (authorLinks) {
+          author = authorLinks
+            .map((link: string) => {
+              const nameMatch = link.match(/<a[^>]*>([^<]+)<\/a>/);
+              return nameMatch ? nameMatch[1] : '';
+            })
+            .filter((name: string) => name)
+            .join(' / ');
+        } else {
+          author = authorText.trim();
+        }
+      }
+    }
+
+    // 如果 JSON-LD 中没有出版社，从 HTML 获取
+    if (!publisher) {
+      // 先尝试匹配带链接的出版社
+      const publisherBlockMatch = response.data.match(/<span class="pl">出版社:<\/span>[\s\n]*<a[^>]*>([^<]+)<\/a>/);
+      if (publisherBlockMatch) {
+        publisher = publisherBlockMatch[1].trim();
+      } else {
+        // 备用方案：匹配不带链接的出版社
+        const backupMatch = response.data.match(/<span class="pl">出版社:<\/span>\s*([^<\n]*?)(?:<br|&nbsp;|<\/div>)/);
+        publisher = backupMatch ? backupMatch[1].trim() : '';
+      }
     }
 
     const coverUrl = coverMatch[1];
@@ -484,7 +559,13 @@ router.post('/douban-import', async (req, res) => {
     await writeFile(filePath, imageResponse.data);
 
     const coverUrlPath = `/uploads/cover/${fileName}`;
-    ResponseUtil.success(res, { coverUrl: coverUrlPath }, '封面导入成功');
+    ResponseUtil.success(res, { 
+      coverUrl: coverUrlPath,
+      title,
+      subtitle,
+      author,
+      publisher
+    }, '封面导入成功');
   } catch (error) {
     console.error('导入豆瓣封面失败:', error);
     ResponseUtil.error(res, '导入豆瓣封面失败');

@@ -359,14 +359,24 @@ const Books = () => {
     setIsLoadingDouban(true);
     try {
       const response = await request.post('/books/douban-import', { bookId });
-      form.setFieldsValue({
+      
+      // 创建要设置的字段对象
+      const formValues = {
         cover: response.coverUrl
-      });
+      };
+
+      // 只设置成功解析的字段
+      if (response.title) formValues.title = response.title;
+      if (response.subtitle) formValues.subtitle = response.subtitle;
+      if (response.author) formValues.author = response.author;
+      if (response.publisher) formValues.publisher = response.publisher;
+
+      form.setFieldsValue(formValues);
       setDoubanDialogVisible(false);
       setDoubanInput('');
-      MessagePlugin.success('封面导入成功');
+      MessagePlugin.success('豆瓣信息导入成功');
     } catch (error) {
-      MessagePlugin.error('导入豆瓣封面失败');
+      MessagePlugin.error('导入豆瓣信息失败');
     } finally {
       setIsLoadingDouban(false);
     }
@@ -782,7 +792,7 @@ const Books = () => {
 
       {/* 豆瓣导入弹窗 */}
       <Dialog
-        header="从豆瓣导入封面"
+        header="从豆瓣导入图书信息"
         visible={doubanDialogVisible}
         onClose={() => {
           setDoubanDialogVisible(false);
